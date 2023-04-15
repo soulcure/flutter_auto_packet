@@ -154,7 +154,7 @@ def uploadImage(image_path):
 # 发生文本信息
 def sendMessage(content) :
     # 发送消息
-    sendRes = requests.post("https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=ID&corpsecret=SECRET",
+    sendRes = requests.post(webhook,
                             data=json.dumps({"msg_type": "text", "content": {"text": content}}),
                             headers={"Content-Type": "application/json"})
     if sendRes.status_code != 200 or sendRes.json()['code'] != 0:
@@ -194,7 +194,7 @@ def writeIpaHtml():
     <html xmlns="http://www.w3.org/1999/xhtml">
         <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <title>buff</title>
+        <title>droneId</title>
         </head>
         <body>
             <h1 style="font-size:80pt">如果点击无法下载安装，请复制超链接到浏览器中打开<h1/>
@@ -227,13 +227,13 @@ def writeIpaPlist():
                 <key>metadata</key>
                 <dict>
                     <key>bundle-identifier</key>
-                    <string>com.idreamsky.buff</string>
+                    <string>com.idreamsky.droneId</string>
                     <key>bundle-version</key>
                     <string>{version}</string>
                     <key>kind</key>
                     <string>software</string>
                     <key>title</key>
-                    <string>buff</string>
+                    <string>droneId</string>
                 </dict>
             </dict>
         </array>
@@ -324,8 +324,7 @@ def uploadApp():
 
         content = f"""构建分支: {branch}
 版本号: {version}+{build_number}"""
-        # 构建的环境: {env}
-        # 安卓包下载地址: {serverBaseUrl}/{dateTime}/Buff-{dateTime}.apk
+        # 安卓包下载地址: {serverBaseUrl}/{dateTime}/droneId-{dateTime}.apk
         # iOS包下载地址: {serverBaseUrl}/{dateTime}/ipa.html
         sendSuccessMessage('🍺🍺🍺构建成功🍺🍺🍺',content,appUrl,ipaUrl,apkUrl,appUrlKey,apkUrlKey,log)
     else:
@@ -336,7 +335,7 @@ def buildChannelApk():
     # 构建32位包
     os.system('fvm flutter build apk --flavor android --release')
     path = 'build/app/outputs/flutter-apk/app-android-release.apk'
-    destWebPath = f"{webPath}/{dateTime}/Buff-android-32.apk"
+    destWebPath = f"{webPath}/{dateTime}/droneId-android-32.apk"
     if os.path.exists(path):
         shutil.move(path,destWebPath)
     else:
@@ -346,7 +345,7 @@ def buildChannelApk():
     for channel in channels:
         os.system(f'fvm flutter build apk --flavor {channel} --release')
         path = f'build/app/outputs/flutter-apk/app-{channel}-release.apk'
-        destWebPath = f"{webPath}/{dateTime}/Buff-{channel}.apk"
+        destWebPath = f"{webPath}/{dateTime}/droneId-{channel}.apk"
         if os.path.exists(path):
             shutil.move(path,destWebPath)
         else:
@@ -355,22 +354,10 @@ def buildChannelApk():
 
 # 发渠道包消息
 def sendChannelApkMessage() :
-    # 获取 token
-    token = getToken()
-    if len(token) == 0:
-        return ''
-    # 获取群列表
-    token = f'Bearer {token}'
-    listRes = requests.get('https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=ID&corpsecret=SECRET',
-                           headers={"Authorization": token})
-    if listRes.status_code != 200 or listRes.json()['code'] != 0:
-        return
-
     content = f"""构建分支: {branch}
 版本号: {version}+{build_number}"""
-
     # 发送消息
-    sendRes = requests.post("https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=ID&corpsecret=SECRET",
+    sendRes = requests.post(webhook,
                             data=json.dumps(
                                 {
                                     "msg_type": "post",
@@ -380,20 +367,20 @@ def sendChannelApkMessage() :
                                                         "title": "渠道包",
                                                         "content": [
                                                             [{"tag": "text", "text":content}],
-                                                            [{"tag": "text", "text":'模拟器+32位包:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/Buff-android-32.apk'},],
-                                                            [{"tag": "text", "text":'官网:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/Buff-android.apk'},],
-                                                            [{"tag": "text", "text":'oppo:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/Buff-OP0S0N00666.apk'},],
-                                                            [{"tag": "text", "text":'步步高:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/Buff-BG0S0N00666.apk'},],
-                                                            [{"tag": "text", "text":'华为:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/Buff-HW0S0N00666.apk'},],
-                                                            [{"tag": "text", "text":'魅族:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/Buff-MZ0S0N00666.apk'},],
-                                                            [{"tag": "text", "text":'小米:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/Buff-XM0S0N00662.apk'},],
-                                                            [{"tag": "text", "text":'腾讯:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/Buff-TX0S0N70666.apk'},],
+                                                            [{"tag": "text", "text":'模拟器+32位包:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-android-32.apk'},],
+                                                            [{"tag": "text", "text":'官网:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-android.apk'},],
+                                                            [{"tag": "text", "text":'oppo:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-OP0S0N00666.apk'},],
+                                                            [{"tag": "text", "text":'步步高:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-BG0S0N00666.apk'},],
+                                                            [{"tag": "text", "text":'华为:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-HW0S0N00666.apk'},],
+                                                            [{"tag": "text", "text":'魅族:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-MZ0S0N00666.apk'},],
+                                                            [{"tag": "text", "text":'小米:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-XM0S0N00662.apk'},],
+                                                            [{"tag": "text", "text":'腾讯:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-TX0S0N70666.apk'},],
                                                         ]
                                                     }
                                                 }
                                             }
                                  }),
-                            headers={"Content-Type": "application/json","Authorization": token})
+                            headers={"Content-Type": "application/json"})
     if sendRes.status_code != 200 or sendRes.json()['code'] != 0:
         print('企业微信消息发送失败')
     print(sendRes.json())
