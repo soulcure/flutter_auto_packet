@@ -8,8 +8,10 @@ import shutil
 import subprocess
 import sys
 import time
+import sys
+import platform
 
-#argv: build.py 1.0.1 1 main false 3.7.3
+#argv: build.py 1.0.1 2 main false 3.7.10
 print(sys.argv)
 version = sys.argv[1]
 build_number = sys.argv[2]
@@ -19,14 +21,13 @@ flutterSdk = sys.argv[5]
 
 # flutter build path
 appPath = "build/ios/iphoneos/Runner.app"
-apkPath = "build/app/outputs/flutter-apk/app-android-release.apk"
+apkPath = "build/app/outputs/flutter-apk/app-release.apk"
 
-dateTime = time.strftime("%Y-%m-%d_%H:%M:%S")
+dateTime = time.strftime("%Y-%m-%d_%H_%M_%S")
 outPutPath = "build/all/" + dateTime
 destAppPath = f"{outPutPath}/droneId-{dateTime}.ipa"
 destApkPath = f"{outPutPath}/droneId-{dateTime}.apk"
 
-webPath = "/Users/ci/Desktop/package"
 httpsUrl = "https://192.168.112.40:8001"
 httpUrl = "http://192.168.112.40:8000"
 logDay = 5
@@ -56,7 +57,8 @@ def change_yaml_version():
 # 清除缓存
 def clear_cache():
     print('清除缓存')
-    os.system('rm ios/Flutter/Flutter.podspec')
+    if os.path.exists('ios/Flutter/Flutter.podspec'):
+        os.remove('ios/Flutter/Flutter.podspec')   #删除文件
     os.system('fvm flutter clean')
     if os.path.exists(appPath):
         shutil.rmtree(appPath)
@@ -71,13 +73,10 @@ def init():
     if not os.path.exists("build/all"):
         os.mkdir("build/all")
     os.mkdir(outPutPath)
-    destWebPath = f"{webPath}/{dateTime}"
-    if not os.path.exists(destWebPath):
-        os.mkdir(destWebPath)
 
 # build iOS
 def buildIOS():
-    print('🍺🍺🍺🍺===iOS开始打包===🍺🍺🍺🍺')
+    print('🍏🍏🍏🍏===iOS开始打包===🍏🍏🍏🍏')
 
     os.system('fvm flutter build ipa -t lib/main.dart --release')
 
@@ -97,9 +96,9 @@ def buildIOS():
         shutil.rmtree("ios/build")
 
 def buildAndroid():
-    print('🍺🍺🍺🍺===android开始打包===🍺🍺🍺🍺')
+    print('🤖🤖🤖🤖===android开始打包===🤖🤖🤖🤖')
 
-    os.system('fvm flutter build apk -t lib/main.dart --flavor android --target-platform=android-arm64 --release')
+    os.system('fvm flutter build apk -t lib/main.dart --target-platform=android-arm64 --release')
 
     if os.path.exists(apkPath):
         print('apk 打包成功')
@@ -305,9 +304,6 @@ def getLog():
 
 def uploadApp():
     if os.path.exists(destAppPath) and os.path.exists(destApkPath) :
-        destWebPath = f"{webPath}/{dateTime}"
-        shutil.move(destAppPath,destWebPath)
-        shutil.move(destApkPath,destWebPath)
         writeIpaHtml()
         writeIpaPlist()
 
@@ -334,22 +330,18 @@ def uploadApp():
 
 def buildChannelApk():
     # 构建32位包
-    os.system('fvm flutter build apk --flavor android --release')
-    path = 'build/app/outputs/flutter-apk/app-android-release.apk'
-    destWebPath = f"{webPath}/{dateTime}/droneId-android-32.apk"
-    if os.path.exists(path):
-        shutil.move(path,destWebPath)
-    else:
+    os.system('fvm flutter build apk --release') # 'fvm flutter build apk --flavor android --release'
+    path = 'build/app/outputs/flutter-apk/app-release.apk'
+
+    if not os.path.exists(path):
         print('apk 打包失败')
+
     # 构建渠道包
     channels = ['android','OP0S0N00666', 'BG0S0N00666', 'HW0S0N00666', 'MZ0S0N00666' ,'XM0S0N00662', 'TX0S0N70666']
     for channel in channels:
         os.system(f'fvm flutter build apk --flavor {channel} --release')
         path = f'build/app/outputs/flutter-apk/app-{channel}-release.apk'
-        destWebPath = f"{webPath}/{dateTime}/droneId-{channel}.apk"
-        if os.path.exists(path):
-            shutil.move(path,destWebPath)
-        else:
+        if not os.path.exists(path):
             print('apk 打包失败')
 
 
@@ -400,8 +392,8 @@ if __name__ == '__main__':
     print(f'版本号: {version}')
 
     # flutter 版本切换
-    #os.system(f"fvm use {flutterSdk} --force")
-    os.system("flutter --version")
+    os.system(f"fvm use {flutterSdk} --force")
+    os.system("fvm flutter --version")
     # 修改版本号
     change_yaml_version()
     # 清除缓存
@@ -411,7 +403,8 @@ if __name__ == '__main__':
 
     if isBuildChannel == 'false' :
         # 构建iOS
-        buildIOS()
+        if(platform.system() =="darwin"):
+            buildIOS()
 
         # 构建android
         buildAndroid()
