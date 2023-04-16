@@ -9,6 +9,7 @@ import subprocess
 import sys
 import time
 
+#argv: build.py 1.0.1 1 main false 3.7.3
 print(sys.argv)
 version = sys.argv[1]
 build_number = sys.argv[2]
@@ -399,8 +400,8 @@ if __name__ == '__main__':
     print(f'版本号: {version}')
 
     # flutter 版本切换
-    os.system(f"fvm use {flutterSdk} --force")
-    os.system(f"fvm flutter --version")
+    #os.system(f"fvm use {flutterSdk} --force")
+    os.system("flutter --version")
     # 修改版本号
     change_yaml_version()
     # 清除缓存
