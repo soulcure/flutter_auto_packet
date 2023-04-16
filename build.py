@@ -16,8 +16,7 @@ print(sys.argv)
 version = sys.argv[1]
 build_number = sys.argv[2]
 branch = sys.argv[3]
-isBuildChannel = sys.argv[4]
-flutterSdk = sys.argv[5]
+flutterSdk = sys.argv[4]
 
 # flutter build path
 appPath = "build/ios/iphoneos/Runner.app"
@@ -25,8 +24,8 @@ apkPath = "build/app/outputs/flutter-apk/app-release.apk"
 
 dateTime = time.strftime("%Y-%m-%d_%H_%M_%S")
 outPutPath = "build/all/" + dateTime
-destAppPath = f"{outPutPath}/droneId-{version}-{build_number}.ipa"
-destApkPath = f"{outPutPath}/droneId-{version}-{build_number}.apk"
+destAppPath = f"{outPutPath}/droneId_v{version}_{build_number}.ipa"
+destApkPath = f"{outPutPath}/droneId_v{version}_{build_number}.apk"
 
 httpsUrl = "https://192.168.112.40:8001"
 httpUrl = "http://192.168.112.40:8000"
@@ -185,7 +184,7 @@ def sendSuccessMessage(title,content,appUrl,appDevelopmentUrl,apkUrl,appImageKey
                                 }),
                             headers={"Content-Type": "application/json"})
     if sendRes.status_code != 200 or sendRes.json()['code'] != 0:
-        print('飞书消息发送失败')
+        print('企业微信消息发送失败')
     print(sendRes.json())
 
 
@@ -203,10 +202,20 @@ def writeIpaHtml():
             <h1/>
         </body>
     </html>"""
-    file = open(f"{webPath}/{dateTime}/ipa.html", "w")
+    file = open(f"{outPutPath}/{dateTime}/ipa.html", "w")
     file.write(content)
     file.close()
 
+
+# plist IOS企业用户提供的无线分发安装方式所使用的协议
+# <key>url</key>
+# {httpsUrl}/{dateTime}/droneId-{dateTime}.ipa  //ipa文件下载地址
+
+# <key>bundle-identifier</key>
+# <string>com.idreamsky.droneId</string> //唯一标识符
+
+# <key>bundle-version</key>
+# <string>{version}</string>
 def writeIpaPlist():
     content = f"""<?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -239,7 +248,7 @@ def writeIpaPlist():
         </array>
     </dict>
     </plist>"""
-    file = open(f"{webPath}/{dateTime}/ipa.plist", "w")
+    file = open(f"{outPutPath}/{dateTime}/ipa.plist", "w")
     file.write(content)
     file.close()
 
@@ -328,63 +337,6 @@ def uploadApp():
         sendMessage('💣💣💣构建失败💣💣💣')
 
 
-def buildChannelApk():
-    # 构建32位包
-    os.system('fvm flutter build apk --release') # 'fvm flutter build apk --flavor android --release'
-    path = 'build/app/outputs/flutter-apk/app-release.apk'
-
-    if not os.path.exists(path):
-        print('apk 打包失败')
-
-    # 构建渠道包
-    channels = ['android','OP0S0N00666', 'BG0S0N00666', 'HW0S0N00666', 'MZ0S0N00666' ,'XM0S0N00662', 'TX0S0N70666']
-    for channel in channels:
-        os.system(f'fvm flutter build apk --flavor {channel} --release')
-        path = f'build/app/outputs/flutter-apk/app-{channel}-release.apk'
-        if not os.path.exists(path):
-            print('apk 打包失败')
-
-
-# 发渠道包消息
-def sendChannelApkMessage() :
-    content = f"""构建分支: {branch}
-版本号: {version}+{build_number}"""
-    # 发送消息
-    sendRes = requests.post(webhook,
-                            data=json.dumps(
-                                {
-                                    "msg_type": "post",
-                                    "content": {
-                                                "post": {
-                                                    "zh_cn": {
-                                                        "title": "渠道包",
-                                                        "content": [
-                                                            [{"tag": "text", "text":content}],
-                                                            [{"tag": "text", "text":'模拟器+32位包:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-android-32.apk'},],
-                                                            [{"tag": "text", "text":'官网:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-android.apk'},],
-                                                            [{"tag": "text", "text":'oppo:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-OP0S0N00666.apk'},],
-                                                            [{"tag": "text", "text":'步步高:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-BG0S0N00666.apk'},],
-                                                            [{"tag": "text", "text":'华为:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-HW0S0N00666.apk'},],
-                                                            [{"tag": "text", "text":'魅族:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-MZ0S0N00666.apk'},],
-                                                            [{"tag": "text", "text":'小米:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-XM0S0N00662.apk'},],
-                                                            [{"tag": "text", "text":'腾讯:'},{"tag": "a","text": "下载地址","href": f'{httpUrl}/{dateTime}/droneId-TX0S0N70666.apk'},],
-                                                        ]
-                                                    }
-                                                }
-                                            }
-                                 }),
-                            headers={"Content-Type": "application/json"})
-    if sendRes.status_code != 200 or sendRes.json()['code'] != 0:
-        print('企业微信消息发送失败')
-    print(sendRes.json())
-
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':
@@ -401,18 +353,13 @@ if __name__ == '__main__':
     # 初始化
     init()
 
-    if isBuildChannel == 'false' :
-        # 构建iOS
-        if(platform.system() =="darwin"):
-            buildIOS()
+    # 构建iOS
+    if(platform.system() =="darwin"):
+        buildIOS()
 
-        # 构建android
-        buildAndroid()
+    # 构建android
+    buildAndroid()
 
-        # 提交App
-        uploadApp()
+    # 提交App
+    uploadApp()
 
-    else :
-        # 构建渠道包
-        buildChannelApk()
-        sendChannelApkMessage()
