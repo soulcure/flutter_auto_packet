@@ -25,8 +25,8 @@ apkPath = "build/app/outputs/flutter-apk/app-release.apk"
 
 dateTime = time.strftime("%Y-%m-%d_%H_%M_%S")
 outPutPath = "build/all/" + dateTime
-destAppPath = f"{outPutPath}/droneId-{dateTime}.ipa"
-destApkPath = f"{outPutPath}/droneId-{dateTime}.apk"
+destAppPath = f"{outPutPath}/droneId-{version}-{build_number}.ipa"
+destApkPath = f"{outPutPath}/droneId-{version}-{build_number}.apk"
 
 httpsUrl = "https://192.168.112.40:8001"
 httpUrl = "http://192.168.112.40:8000"
