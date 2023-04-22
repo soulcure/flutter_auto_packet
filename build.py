@@ -111,44 +111,26 @@ def getToken():
     global qywechat_token
     if len(qywechat_token) > 0:
         return qywechat_token
-    tokenRes = requests.post("https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=ID&corpsecret=SECRET",
-                             data=json.dumps({'app_id': "cli_9e62c8e53639100d", "app_secret": "xPM1CNYeqoDsXfDLFNvXygWZ58UYaiqL"}),
-                             headers={"Content-Type": "application/json"})
-    if tokenRes.status_code != 200 or tokenRes.json()['code'] != 0:
-        qywechat_token = ''
-        return qywechat_token
-    qywechat_token = tokenRes.json()['access_token']
+    
+    Url = "https://qyapi.weixin.qq.com/cgi-bin/gettoken"
+    Data = {
+            "corpid": "cli_9e62c8e53639100d",
+            "corpsecret": "xPM1CNYeqoDsXfDLFNvXygWZ58UYaiqL"
+    }
+    r = requests.get(url=Url, params=Data)
+    qywechat_token = r.json()['access_token']
     return qywechat_token
 
+##上传到图片素材  图片url
+def uploadImage(path): 
+    Gtoken = getToken()
+    img_url = "https://qyapi.weixin.qq.com/cgi-bin/media/uploadimg?access_token={}".format(Gtoken)
+    files = {'media': open(path, 'rb')}
+    r = requests.post(img_url, files=files)
+    re = json.loads(r.text)
+    # print("media_id: " + re['media_id'])
+    return re['url']
 
-# 上传图片到企业微信
-def uploadImage(image_path):
-    # 获取 token
-    token = getToken()
-    if len(token) == 0:
-        return ''
-    token = f'Bearer {token}'
-    with open(image_path, 'rb') as f:
-        image = f.read()
-    resp = requests.post(
-        url='https://qyapi.weixin.qq.com/cgi-bin/media/uploadimg?access_token=ACCESS_TOKEN',
-        headers={'Authorization': token},
-        files={
-            "image": image
-        },
-        data={
-            "image_type": "message"
-        },
-        stream=True)
-    resp.raise_for_status()
-    content = resp.json()
-    print(content)
-    if content.get("code") == 0:
-        data = content['data']
-        image_key = data['image_key']
-        return image_key
-    else:
-        raise Exception("Call Api Error, errorCode is %s" % content["code"])
 
 # 发生文本信息
 def sendMessage(content) :
@@ -160,32 +142,34 @@ def sendMessage(content) :
         print('企业微信消息发送失败')
 
 # 发生富文本信息
-def sendSuccessMessage(title,content,appUrl,appDevelopmentUrl,apkUrl,appImageKey,apkImageKey,log) :
-    sendRes = requests.post(webhook,
-                            data=json.dumps(
-                                {
-                                    "msgtype": "text",
-                                    "content": {
-                                        "post": {
-                                            "zh_cn": {
-                                                "title": title,
-                                                "content": [
-                                                    [{"tag": "text", "text":content}],
-                                                    [{"tag": "text", "text":'iOS:'},{"tag": "a","text": "安装地址","href": appUrl},],
-                                                    [{"tag": "text", "text":'iOS包:'},{"tag": "a","text": "下载地址","href": appDevelopmentUrl}],
-                                                    [{"tag":"img","image_key":appImageKey}],
-                                                    [{"tag": "text", "text":'android:'},{"tag": "a","text": "下载地址","href": apkUrl}],
-                                                    [{"tag":"img","image_key":apkImageKey}],
-                                                    [{"tag": "text", "text": "日志:\n" + log }]
-                                                ]
-                                            }
-                                        }
-                                    }
-                                }),
-                            headers={"Content-Type": "application/json"})
-    if sendRes.status_code != 200 or sendRes.json()['code'] != 0:
-        print('企业微信消息发送失败')
-    print(sendRes.json())
+def sendSuccessMessage(title,content,appUrl,appDevelopmentUrl,apkUrl,appImageUrl,apkImageKey,log) :
+    url = "https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={}".format(getToken())
+    data = {
+        "toparty": "",
+        "msgtype": "text",
+        "agentid": "",
+        "text": {
+            "content": {
+                "post": {
+                    "zh_cn": {
+                        "title": title,
+                        "content": [
+                            [{"tag": "text", "text":content}],
+                            [{"tag": "text", "text":'iOS:'},{"tag": "a","text": "安装地址","href": appUrl},],
+                            [{"tag": "text", "text":'iOS包:'},{"tag": "a","text": "下载地址","href": appDevelopmentUrl}],
+                            [{"tag":"img","image_key":appImageUrl}],
+                            [{"tag": "text", "text":'android:'},{"tag": "a","text": "下载地址","href": apkUrl}],
+                            [{"tag":"img","image_key":apkImageKey}],
+                            [{"tag": "text", "text": "日志:\n" + log }]
+                        ]
+                    }
+                }
+            }
+        },
+        "safe": "0"
+    }
+    result = requests.post(url=url, data=json.dumps(data))
+    return result.text
 
 
 def writeIpaHtml():
